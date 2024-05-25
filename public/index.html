@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book List</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css">
+</head>
+<body onload="getText('http://127.0.0.1:8080/process_index')">
+
+    <div id="res"></div>
+    <div id="tb"></div>
+    <button class="btn btn-primary" onclick="getText('http://127.0.0.1:8080/process_index')">Show All Books <span class="badge badge-light" id="nn"></span></button>
+    
+    <!-- Update Modal -->
+    <div class="modal fade" id="updateModal" tabindex="-1" role="dialog" aria-labelledby="updateModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="updateModalLabel">Update Book</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="updateForm">
+                        <input type="hidden" id="updateId">
+                        <div class="form-group">
+                            <label for="updateTitle">Title</label>
+                            <input type="text" class="form-control" id="updateTitle" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="updateDescription">Description</label>
+                            <input type="text" class="form-control" id="updateDescription" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="updatePrice">Price</label>
+                            <input type="number" class="form-control" id="updatePrice" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="updateCategory">Category</label>
+                            <input type="text" class="form-control" id="updateCategory" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="updateBook()">Update Book</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function getText(url) {
+            try {
+                var response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                var x = await response.json();
+                var ta = "<table border='1' class='animate__animated animate__fadeInDownBig table'><tr><th>Id</th><th>Name</th><th>price</th><th>category</th><th>Actions</th></tr>";
+                for (var i = 0; i < x.length; i++) {
+                    ta += "<tr><td>" + x[i].id + "</td><td>" + x[i].title + "</td><td>" + x[i].price + "</td><td>" + x[i].category + "</td>" +
+                          "<td><button class='btn btn-warning' onclick='showUpdateModal(" + JSON.stringify(x[i]) + ")'>Update</button> " +
+                          "<button class='btn btn-danger' onclick='deleteBook(" + x[i].id + ")'>Delete</button></td></tr>";
+                }
+                ta += "</table>";
+                document.getElementById("tb").innerHTML = ta;
+            } catch (error) {
+                console.error('There was a problem with the fetch operation:', error);
+                document.getElementById("tb").innerHTML = "Error loading data.";
+            }
+        }
+
+        function showUpdateModal(book) {
+            document.getElementById('updateId').value = book.id;
+            document.getElementById('updateTitle').value = book.title;
+            document.getElementById('updateDescription').value = book.description;
+            document.getElementById('updatePrice').value = book.price;
+            document.getElementById('updateCategory').value = book.category;
+            $('#updateModal').modal('show');
+        }
+
+        async function updateBook() {
+            const book = {
+                id: document.getElementById('updateId').value,
+                title: document.getElementById('updateTitle').value,
+                description: document.getElementById('updateDescription').value,
+                price: document.getElementById('updatePrice').value,
+                category: document.getElementById('updateCategory').value
+            };
+
+            try {
+                const response = await fetch('http://127.0.0.1:8080/process_update', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(book)
+                });
+
+                const result = await response.text();
+                document.getElementById('res').innerHTML = result;
+                $('#updateModal').modal('hide');
+                getText('http://127.0.0.1:8080/process_index');
+            } catch (error) {
+                console.error('Error updating book:', error);
+                document.getElementById('res').innerHTML = 'Error updating book';
+            }
+        }
+
+        async function deleteBook(bookId) {
+            try {
+                const response = await fetch('http://127.0.0.1:8080/process_delete', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ id: bookId })
+                });
+
+                const result = await response.text();
+                document.getElementById('res').innerHTML = result;
+                getText('http://127.0.0.1:8080/process_index');
+            } catch (error) {
+                console.error('Error deleting book:', error);
+                document.getElementById('res').innerHTML = 'Error deleting book';
+            }
+        }
+    </script>
+
+    <!-- Bootstrap and jQuery dependencies -->
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+</body>
+</html>
