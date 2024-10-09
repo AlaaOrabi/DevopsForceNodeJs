@@ -21,7 +21,7 @@ spec:
         - name: MYSQL_ROOT_PASSWORD
           value: ""
         - name: MYSQL_DATABASE
-          value: your_database_name  # Replace with your database name
+          value: test  # Replace with your database name
 ---
 apiVersion: v1
 kind: Service
